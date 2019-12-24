@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -26,6 +26,7 @@ namespace Internet_Explorer
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -94,6 +95,14 @@ namespace Internet_Explorer
                     Close();
                     break;
 
+                case Keys.Z:
+                    DecreaseOpacity();
+                    break;
+
+                case Keys.X:
+                    IncreaseOpacity();
+                    break;
+
                     //case Keys.Q:
                     //    DeleteMySelf();
                     //    break;
@@ -128,6 +137,22 @@ namespace Internet_Explorer
         private bool CheckPassword()
         {
             return passwordTextBox.Password.ToLower() == Properties.Resources.Password || passwordTextBox.Password.ToLower() == Properties.Resources.Password_rus;
+        }
+
+        private void DecreaseOpacity()
+        {
+            answerTextBlock.Opacity -= 0.05f;
+
+            if (answerTextBlock.Opacity <= 0)
+                answerTextBlock.Opacity = 0.05f;
+        }
+
+        private void IncreaseOpacity()
+        {
+            answerTextBlock.Opacity += 0.05f;
+
+            if (answerTextBlock.Opacity >= 1)
+                answerTextBlock.Opacity = 1f;
         }
 
         private void ClearAnswerBlock()
