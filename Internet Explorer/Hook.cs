@@ -8,16 +8,23 @@ namespace Internet_Explorer
     public class Hook
     {
         private const int WH_KEYBOARD_LL = 13;
+        private const int WH_MOUSE_LL = 14;
+        private const int WM_MOUSEWHEEL = 0x020A;
+        private const int WM_LBUTTONDOWN = 0x0201;
+        private const int WM_RBUTTONDOWN = 0x0204;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_HOTKEY = 0x0312;
         private const int WM_COPY = 0x0301;
 
-        private static LowLevelKeyboardProc _proc = HookCallback;
-        private static IntPtr _hookID = IntPtr.Zero;
+        private static LowLevelKeyboardProc _keyboardProc = KeyboardHookCallback;
+        private static LowLevelKeyboardProc _mouseProc = MouseHookCallback;
+        private static IntPtr _keyboardHookID = IntPtr.Zero;
+        private static IntPtr _mouseHookID = IntPtr.Zero;
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-        public static Action<Keys> HookCallbackAction;
+        public static Action<Keys> HookKeyboardCallbac;
+        public static Action<MouseButtons> HookMouseCallback;
 
         public static void SetHook()
         {
@@ -25,30 +32,56 @@ namespace Internet_Explorer
             {
                 using (ProcessModule curModule = curProcess.MainModule)
                 {
-                    _hookID = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(curModule.ModuleName), 0);
+                    _keyboardHookID = SetWindowsHookEx(WH_KEYBOARD_LL, _keyboardProc, GetModuleHandle(curModule.ModuleName), 0);
+                    _mouseHookID = SetWindowsHookEx(WH_MOUSE_LL, _mouseProc, GetModuleHandle(curModule.ModuleName), 0);
                 }
             }
         }
 
         public static bool Dispose()
         {
-            return UnhookWindowsHookEx(_hookID);
+            UnhookWindowsHookEx(_mouseHookID);
+            return UnhookWindowsHookEx(_keyboardHookID);
         }
 
-        protected static void OnHookCallback(Keys key)
+        protected static void OnHookKeyboardCallback(Keys key)
         {
-            HookCallbackAction?.Invoke(key);
+            HookKeyboardCallbac?.Invoke(key);
         }
 
-        private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        protected static void OnHookMouseCallback(MouseButtons key)
+        {
+            HookMouseCallback?.Invoke(key);
+        }
+
+        private static IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
                 int vkCode = Marshal.ReadInt32(lParam);
-                OnHookCallback((Keys)vkCode);
+                OnHookKeyboardCallback((Keys)vkCode);
             }
 
-            return CallNextHookEx(_hookID, nCode, wParam, lParam);
+            return CallNextHookEx(_keyboardHookID, nCode, wParam, lParam);
+        }
+
+        private static IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            bool isMouseLButtonDown = wParam == (IntPtr)WM_LBUTTONDOWN;
+            bool isMouseRButtonDown = wParam == (IntPtr)WM_RBUTTONDOWN;
+            bool isMouseWheel = wParam == (IntPtr)WM_MOUSEWHEEL;
+
+            if (nCode >= 0 && (isMouseLButtonDown || isMouseRButtonDown || isMouseWheel))
+            {
+                if (isMouseLButtonDown)
+                    OnHookMouseCallback(MouseButtons.Left);
+                else if (isMouseRButtonDown)
+                    OnHookMouseCallback(MouseButtons.Right);
+                else if (isMouseWheel)
+                    OnHookMouseCallback(MouseButtons.Middle);
+            }
+
+            return CallNextHookEx(_mouseHookID, nCode, wParam, lParam);
         }
 
         //public static string GetSelectedText()

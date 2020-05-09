@@ -10,6 +10,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using Keys = System.Windows.Forms.Keys;
+using MouseButtons = System.Windows.Forms.MouseButtons;
 
 namespace Internet_Explorer
 {
@@ -36,7 +37,8 @@ namespace Internet_Explorer
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Hook.SetHook();
-            Hook.HookCallbackAction += Hook_KeyPressed;
+            Hook.HookKeyboardCallbac += Hook_KeyPressed;
+            Hook.HookMouseCallback += Hook_MousePressed;
 
             LoadTest();
         }
@@ -55,10 +57,20 @@ namespace Internet_Explorer
                 return;
             }
 
-            KeyHandler(key);
+            KeyboardKeyHandler(key);
         }
 
-        private void KeyHandler(Keys key)
+        private void Hook_MousePressed(MouseButtons key)
+        {
+            if (passwordTextBox.Visibility == Visibility.Visible)
+            {
+                return;
+            }
+
+            MouseKeyHandler(key);
+        }
+
+        private void KeyboardKeyHandler(Keys key)
         {
             switch (key)
             {
@@ -91,6 +103,23 @@ namespace Internet_Explorer
                 /*case Keys.W:
                     HideTaskBar();
                     break;*/
+            }
+        }
+
+        private void MouseKeyHandler(MouseButtons key)
+        {
+            switch (key)
+            {
+                case MouseButtons.Left:
+                    ClearAnswerBlock();
+                    Hide();
+                    break;
+
+                // Прокрутка среднего колёсика мыши (направление неизвестно), а не нажатие на него
+                case MouseButtons.Middle:
+                    Show();
+                    answerTextBlock.Text = SearchQuestion(GetQuestion());
+                    break;
             }
         }
 
