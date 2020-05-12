@@ -79,7 +79,7 @@ namespace Internet_Explorer.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на [{&quot;question&quot;:&quot;IT-инфраструктурой будем называть технологический комплекс:&quot;,&quot;answer&quot;:&quot;[+] предоставляющий необходимый инструментарий для ведения бизнеса и сервис - набор IT-услуг, обеспечивающих бизнес-процессф2.&quot;},{&quot;question&quot;:&quot;Понятие «архитектура бизнеса» тесно связано:&quot;,&quot;answer&quot;:&quot;[+] планом развития  и структурой предприятия; 3.\t&quot;},{&quot;question&quot;:&quot;Управленческая информация – это:  &quot;,&quot;answer&quot;:&quot; [+]первичные документы и финансовые отчеты     4.&quot;},{&quot;question&quot;:&quot;Управленческая информация –это информация о структ [остаток строки не уместился]&quot;;.
+        ///   Ищет локализованную строку, похожую на [{&quot;question&quot;:&quot;A date by which you have to do something&quot;,&quot;answer&quot;:&quot;deadline&quot;},{&quot;question&quot;:&quot;A set of rules for behaving correctly&quot;,&quot;answer&quot;:&quot;etiquette&quot;},{&quot;question&quot;:&quot;The final result of a process, meeting, etc.&quot;,&quot;answer&quot;:&quot;outcome&quot;},{&quot;question&quot;:&quot;I don’t want to____ more time on this.&quot;,&quot;answer&quot;:&quot;waste&quot;},{&quot;question&quot;:&quot;To find new workers to join a company&quot;,&quot;answer&quot;:&quot;to recruit&quot;},{&quot;question&quot;:&quot;To fill in a form or write a letter for a job&quot;,&quot;answer&quot;:&quot;to apply&quot;},{&quot;question&quot;:&quot;A person who gives people a job&quot;,&quot;answer&quot;: [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string test {
             get {

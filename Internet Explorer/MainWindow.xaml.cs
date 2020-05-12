@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using Keys = System.Windows.Forms.Keys;
@@ -28,6 +29,9 @@ namespace Internet_Explorer
         private List<QA> QAList = new List<QA>();
         private List<QA> AnswersList = new List<QA>();
         private List<QA>.Enumerator AnswersListEnumerator;
+
+        private bool IsTryingToGetQuestion = false;
+        private bool IsCanWeSendCopyMessage = true;
 
         public MainWindow()
         {
@@ -67,7 +71,9 @@ namespace Internet_Explorer
                 return;
             }
 
-            MouseKeyHandler(key);
+            Task.Run(() => MouseKeyHandler(key));
+
+            //MouseKeyHandler(key);
         }
 
         private void KeyboardKeyHandler(Keys key)
@@ -85,6 +91,7 @@ namespace Internet_Explorer
                     break;
 
                 case Keys.D:
+                    Show();
                     answerTextBlock.Text = GetNextQuestion();
                     break;
 
@@ -111,14 +118,21 @@ namespace Internet_Explorer
             switch (key)
             {
                 case MouseButtons.Left:
-                    ClearAnswerBlock();
-                    Hide();
+                    passwordTextBox.Dispatcher.InvokeAsync(() => {
+                        ClearAnswerBlock();
+                        Hide();
+                    });
                     break;
 
                 // Прокрутка среднего колёсика мыши (направление неизвестно), а не нажатие на него
                 case MouseButtons.Middle:
-                    Show();
-                    answerTextBlock.Text = SearchQuestion(GetQuestion());
+                    string answer = SearchQuestion(GetQuestion());
+
+                    passwordTextBox.Dispatcher.Invoke(() =>
+                    {
+                        answerTextBlock.Text = answer;
+                        Show();
+                    });
                     break;
             }
         }
@@ -191,7 +205,37 @@ namespace Internet_Explorer
 
         private string GetQuestion()
         {
-            return Clipboard.GetText()?.ToLower();
+            if (IsTryingToGetQuestion || !IsCanWeSendCopyMessage)
+                return String.Empty;
+
+            IsTryingToGetQuestion = true;
+            IsCanWeSendCopyMessage = false;
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(2000);
+                IsCanWeSendCopyMessage = true;
+            });
+
+            System.Windows.Forms.SendKeys.SendWait("^(c)");
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            string anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
+
+            while (!passwordTextBox.Dispatcher.Invoke(() => Clipboard.ContainsText()) && stopwatch.Elapsed.TotalMilliseconds <= 1300)
+            {
+                Thread.Sleep(50);
+                anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
+            }
+
+            passwordTextBox.Dispatcher.Invoke(() => Clipboard.Clear());
+            stopwatch.Reset();
+
+            IsTryingToGetQuestion = false;
+            return anser;
+
+            //return Hook.GetSelectedText();
+            //return Clipboard.GetText()?.ToLower();
         }
 
         private string GetNextQuestion()
@@ -213,6 +257,9 @@ namespace Internet_Explorer
 
         private string SearchQuestion(string question)
         {
+            if (string.IsNullOrWhiteSpace(question))
+                return passwordTextBox.Dispatcher.Invoke(() => answerTextBlock.Text);
+
             AnswersList = QAList.Where(qa => qa.question.ToLower().Contains(question))?.ToList();
             AnswersListEnumerator = AnswersList.GetEnumerator();
 
