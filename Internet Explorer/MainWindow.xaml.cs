@@ -33,6 +33,9 @@ namespace Internet_Explorer
         private bool IsTryingToGetQuestion = false;
         private bool IsCanWeSendCopyMessage = true;
 
+        private bool UseMouseHook = false;
+        private bool UseAutoClipboard = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -40,6 +43,8 @@ namespace Internet_Explorer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            Hook.UseMouseHook = UseMouseHook;
+
             Hook.SetHook();
             Hook.HookKeyboardCallbac += Hook_KeyPressed;
             Hook.HookMouseCallback += Hook_MousePressed;
@@ -205,37 +210,41 @@ namespace Internet_Explorer
 
         private string GetQuestion()
         {
-            //if (IsTryingToGetQuestion || !IsCanWeSendCopyMessage)
-            //    return String.Empty;
-
-            //IsTryingToGetQuestion = true;
-            //IsCanWeSendCopyMessage = false;
-
-            //Task.Run(() =>
-            //{
-            //    Thread.Sleep(2000);
-            //    IsCanWeSendCopyMessage = true;
-            //});
-
-            //System.Windows.Forms.SendKeys.SendWait("^(c)");
-
-            //Stopwatch stopwatch = Stopwatch.StartNew();
-            //string anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
-
-            //while (!passwordTextBox.Dispatcher.Invoke(() => Clipboard.ContainsText()) && stopwatch.Elapsed.TotalMilliseconds <= 1300)
-            //{
-            //    Thread.Sleep(50);
-            //    anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
-            //}
-
-            //passwordTextBox.Dispatcher.Invoke(() => Clipboard.Clear());
-            //stopwatch.Reset();
-
-            //IsTryingToGetQuestion = false;
-            //return anser;
+            if (!UseAutoClipboard)
+            {
+                return Clipboard.GetText()?.ToLower();
+            }
 
             //return Hook.GetSelectedText();
-            return Clipboard.GetText()?.ToLower();
+
+            if (IsTryingToGetQuestion || !IsCanWeSendCopyMessage)
+                return String.Empty;
+
+            IsTryingToGetQuestion = true;
+            IsCanWeSendCopyMessage = false;
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(2000);
+                IsCanWeSendCopyMessage = true;
+            });
+
+            System.Windows.Forms.SendKeys.SendWait("^(c)");
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            string anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
+
+            while (!passwordTextBox.Dispatcher.Invoke(() => Clipboard.ContainsText()) && stopwatch.Elapsed.TotalMilliseconds <= 1300)
+            {
+                Thread.Sleep(50);
+                anser = passwordTextBox.Dispatcher.Invoke(() => Clipboard.GetText()?.ToLower());
+            }
+
+            passwordTextBox.Dispatcher.Invoke(() => Clipboard.Clear());
+            stopwatch.Reset();
+
+            IsTryingToGetQuestion = false;
+            return anser;
         }
 
         private string GetNextQuestion()
